@@ -13,12 +13,11 @@
     
     <style>
         :root {
-            --radius: 0.5rem; /* Standard Shadcn Radius */
+            --radius: 0.5rem;
             --zinc-50: #fafafa;
             --zinc-100: #f4f4f5;
             --zinc-200: #e4e4e7;
             --zinc-900: #09090b;
-            --ring: 2px solid #09090b;
         }
 
         body {
@@ -33,31 +32,23 @@
         /* --- SHADCN UI COMPONENT REPLICATION --- */
         .shadcn-input {
             display: flex;
-            height: 2.5rem; /* h-10 */
+            height: 2.5rem;
             width: 100%;
             border-radius: var(--radius);
             border: 1px solid var(--zinc-200);
             background-color: #ffffff;
             padding: 0.5rem 0.75rem;
-            font-size: 0.875rem; /* text-sm */
+            font-size: 0.875rem;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
         }
 
         .shadcn-input:focus {
             border-color: var(--zinc-900);
-            ring: 2px;
             box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.05);
         }
 
-        .shadcn-input::placeholder {
-            color: #71717a; /* text-muted-foreground */
-        }
-
-        .shadcn-input:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+        .shadcn-input::placeholder { color: #71717a; }
 
         /* --- LAYOUT ENGINE --- */
         .app-shell {
@@ -101,7 +92,7 @@
             filter: grayscale(1);
         }
 
-        /* Mode Toggle */
+        /* Toggle Component */
         .toggle-container {
             background: var(--zinc-100);
             padding: 2px;
@@ -155,8 +146,14 @@
             </div>
 
             <div class="space-y-5 pt-4">
+                
+                <div id="discRow" class="hidden flex justify-between items-center text-[11px] text-rose-500 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <span class="font-bold uppercase tracking-wider">Discount Applied</span>
+                    <span class="font-bold tabular">-<span id="discDisplayVal">0.00</span></span>
+                </div>
+
                 <div class="flex justify-between items-baseline border-b border-zinc-100 pb-3">
-                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Tax Audit</span>
+                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Tax Audit / Net</span>
                     <span id="subVal" class="text-xs font-bold tabular">0.00</span>
                 </div>
 
@@ -274,11 +271,27 @@
             const base = parseFloat(document.getElementById('baseIn').value) || 0;
             const discInput = parseFloat(document.getElementById('discIn').value) || 0;
 
-            // Logical Guardrail: Discount cap
-            let dVal = (discMode === 'pct') ? base * (Math.min(discInput, 100) / 100) : Math.min(discInput, base);
+            // Discount Logic
+            let dVal = 0;
+            if (base > 0 && discInput > 0) {
+                 dVal = (discMode === 'pct') ? base * (Math.min(discInput, 100) / 100) : Math.min(discInput, base);
+            }
+            
+            // Subtotal
             const subtotal = base - dVal;
 
-            // Cascading Logic (SRI LANKAN HOSPITALITY STANDARD)
+            // UI Update: Discount Row Visibility
+            const discRow = document.getElementById('discRow');
+            const discDisplay = document.getElementById('discDisplayVal');
+            
+            if (dVal > 0) {
+                discRow.classList.remove('hidden');
+                discDisplay.innerText = format(dVal);
+            } else {
+                discRow.classList.add('hidden');
+            }
+
+            // Cascading Taxes (SRI LANKAN HOSPITALITY STANDARD)
             const sc = subtotal * 0.10;
             const tdl = subtotal * 0.0104; 
             const ssc = (subtotal + sc) * 0.025641;
@@ -299,7 +312,7 @@
             document.getElementById('grandTotal').innerText = format(total);
         }
 
-        // Viewport handling for PWA stability
+        // Viewport handling
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
                 document.getElementById('app').style.height = `${window.visualViewport.height}px`;
