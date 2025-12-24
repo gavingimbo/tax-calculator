@@ -3,187 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Calculator | Professional System</title>
+    <title>Calculator | Institutional Grade</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --ring: rgba(9, 9, 11, 0.1); }
+        :root { --ring: rgba(9, 9, 11, 0.08); }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #ffffff;
             color: #09090b;
             -webkit-font-smoothing: antialiased;
-            /* Prevents the "stuck" feeling on mobile scroll */
-            overflow-y: auto; 
-            overscroll-behavior-y: none;
+            overflow: hidden;
+            height: 100dvh;
         }
-        .premium-card {
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Results Display (Top) */
+        .display-pane {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2.5rem 1.5rem;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 200px; /* Space for console */
+        }
+
+        /* Interactive Console (Bottom) */
+        .interaction-console {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #e4e4e7;
+            padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        /* Elements */
+        .input-group {
             background: #ffffff;
-            border: 1px solid #f4f4f5;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        .input-pill {
-            background: #fbfbfb;
             border: 1px solid #e4e4e7;
             border-radius: 14px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .input-pill:focus-within {
-            background: #ffffff;
+        .input-group:focus-within {
             border-color: #09090b;
-            box-shadow: 0 0 0 2px var(--ring);
+            box-shadow: 0 0 0 4px var(--ring);
         }
-        .segmented-bg {
-            background-color: #f4f4f5;
-            padding: 3px;
-            border-radius: 14px;
+
+        /* The Percentage/Fixed Toggle */
+        .unit-toggle-container {
+            background: #f4f4f5;
+            padding: 2px;
+            border-radius: 10px;
             display: flex;
+            width: fit-content;
         }
-        .segmented-item {
-            flex: 1;
-            padding: 0.6rem;
-            font-size: 11px;
+        .unit-btn {
+            padding: 6px 12px;
+            font-size: 10px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            text-align: center;
-            border-radius: 11px;
-            transition: all 0.2s ease;
+            border-radius: 8px;
+            transition: all 0.2s;
             color: #71717a;
         }
-        .segmented-item.active {
-            background: white;
+        .unit-btn.active {
+            background: #ffffff;
             color: #09090b;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
         }
-        /* Numerical Inputs: Remove spinners */
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
-            -webkit-appearance: none; margin: 0; 
+
+        .guest-tab {
+            flex: 1;
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 10px;
+            transition: all 0.2s;
+            color: #71717a;
         }
-        .btn-press:active { transform: scale(0.96); }
-        
-        /* Sticky logic for mobile console */
-        .sticky-console {
-            position: sticky;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid #f4f4f5;
-            padding-bottom: env(safe-area-inset-bottom);
+        .guest-tab.active {
+            background: #09090b;
+            color: #ffffff;
         }
+
+        /* Typography & Table */
+        .tabular { font-variant-numeric: tabular-nums; }
+        .row-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+        .row-label { font-size: 12px; color: #71717a; font-weight: 500; }
+        .row-value { font-size: 12px; color: #09090b; font-weight: 600; }
+
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input { background: transparent; outline: none; width: 100%; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-[100dvh] flex flex-col">
+<body>
 
-    <div class="flex-1 px-6 pt-10 pb-6 max-w-md mx-auto w-full">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-lg font-extrabold tracking-tight">Calculator</h1>
-            <div class="flex items-center gap-1 bg-zinc-100 px-2 py-1 rounded-full">
-                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Live</span>
-            </div>
-        </header>
-
-        <div class="space-y-10">
-            <section class="text-center">
-                <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Net Total Amount</p>
-                <div class="flex items-baseline justify-center gap-2">
-                    <span id="grandTotal" class="text-6xl font-extrabold tracking-tighter tabular-nums">0.00</span>
-                    <span class="text-sm font-bold text-zinc-300">LKR</span>
+    <div class="app-container" id="app">
+        <div class="display-pane" id="scrollArea">
+            <div class="space-y-10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center">
+                            <i data-lucide="percent" class="text-white w-3 h-3"></i>
+                        </div>
+                        <span class="text-[11px] font-bold uppercase tracking-[0.15em]">Calculator</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-zinc-100 px-2 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-zinc-900"></span>
+                        <span class="text-[9px] font-bold text-zinc-500 uppercase">Secure</span>
+                    </div>
                 </div>
-            </section>
 
-            <section class="space-y-4">
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-zinc-500 font-medium">Taxable Subtotal</span>
-                    <span id="summarySub" class="font-bold tabular-nums">0.00</span>
+                <div class="text-center space-y-2">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.25em]">Total Amount Payable</p>
+                    <div class="flex items-baseline justify-center gap-2">
+                        <span id="grandTotal" class="text-6xl font-extrabold tracking-tighter tabular">0.00</span>
+                        <span class="text-sm font-bold text-zinc-300">LKR</span>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-6 space-y-5">
+                    <div class="flex justify-between items-center pb-2 border-b border-zinc-100">
+                        <span class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Breakdown</span>
+                        <span id="taxableLabel" class="text-[10px] font-bold text-zinc-900 bg-white px-2 py-0.5 rounded border border-zinc-200 tabular">SUBTOTAL: 0.00</span>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <div class="row-item">
+                            <span class="row-label">Service Charge (10%)</span>
+                            <span id="scVal" class="row-value tabular">0.00</span>
+                        </div>
+                        <div class="row-item">
+                            <span class="row-label">TDL (1.04%)</span>
+                            <span id="tdlVal" class="row-value tabular">0.00</span>
+                        </div>
+                        <div id="sscRow" class="row-item transition-opacity duration-300">
+                            <span class="row-label">SSCL (2.5641%)</span>
+                            <span id="sscVal" class="row-value tabular">0.00</span>
+                        </div>
+                        <div id="vatRow" class="row-item transition-opacity duration-300">
+                            <span class="row-label">VAT (18%)</span>
+                            <span id="vatVal" class="row-value tabular">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="diplomatCard" class="hidden fade-in">
+                    <div class="bg-zinc-900 rounded-3xl p-6 text-white relative overflow-hidden">
+                        <i data-lucide="crown" class="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 -rotate-12"></i>
+                        <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Diplomatic Exemption</p>
+                        <div class="flex justify-between items-end">
+                            <div class="space-y-1">
+                                <p class="text-[10px] text-zinc-400">Total Savings</p>
+                                <p id="totalExVal" class="text-2xl font-bold tabular">0.00 LKR</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-emerald-400 font-bold uppercase">VAT & SSC Waived</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 pb-4 text-center">
+                    <p class="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.15em] leading-relaxed">
+                        Gavin Matthew. Not for distribution or resale.<br>
+                        Local calculation only.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="interaction-console space-y-4" id="console">
+            <div class="flex bg-zinc-100 p-1 rounded-xl">
+                <button onclick="setGuest('standard')" id="btnStandard" class="guest-tab active">Standard Guest</button>
+                <button onclick="setGuest('diplomat')" id="btnDiplomat" class="guest-tab">Diplomat</button>
+            </div>
+
+            <div class="input-group px-4 py-4 flex items-center gap-3">
+                <span class="text-[10px] font-black text-zinc-400 border-r pr-3 border-zinc-100">LKR</span>
+                <input 
+                    type="number" 
+                    id="baseInput" 
+                    oninput="calculate()" 
+                    inputmode="decimal" 
+                    placeholder="Enter base value" 
+                    class="font-bold text-xl placeholder:text-zinc-200"
+                >
+            </div>
+
+            <div class="input-group px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3 flex-1">
+                    <i data-lucide="tag" class="w-4 h-4 text-zinc-300"></i>
+                    <input 
+                        type="number" 
+                        id="discInput" 
+                        oninput="calculate()" 
+                        inputmode="decimal" 
+                        placeholder="Add discount" 
+                        class="font-semibold text-sm placeholder:text-zinc-200"
+                    >
                 </div>
                 
-                <div class="h-[1px] bg-zinc-50 w-full"></div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-zinc-400">Service Charge (10%)</span>
-                        <span id="summarySC" class="text-xs font-semibold tabular-nums">0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-zinc-400">TDL (1.04%)</span>
-                        <span id="summaryTDL" class="text-xs font-semibold tabular-nums">0.00</span>
-                    </div>
-                    <div id="sscRow" class="flex justify-between items-center">
-                        <span class="text-xs text-zinc-400">SSCL (2.5641%)</span>
-                        <span id="summarySSC" class="text-xs font-semibold tabular-nums">0.00</span>
-                    </div>
-                    <div id="vatRow" class="flex justify-between items-center">
-                        <span class="text-xs text-zinc-400">VAT (18%)</span>
-                        <span id="summaryVAT" class="text-xs font-semibold tabular-nums">0.00</span>
-                    </div>
+                <div class="unit-toggle-container">
+                    <button onclick="setDiscType('pct')" id="typePct" class="unit-btn active">%</button>
+                    <button onclick="setDiscType('fixed')" id="typeFixed" class="unit-btn">LKR</button>
                 </div>
-            </section>
-
-            <section id="diplomatCard" class="hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div class="bg-zinc-900 rounded-[2rem] p-6 text-white overflow-hidden relative shadow-lg">
-                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Exemption Summary</p>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <p class="text-[10px] text-zinc-400 mb-1">VAT + SSC Saved</p>
-                            <p id="exTotal" class="text-2xl font-bold">0.00 LKR</p>
-                        </div>
-                        <i data-lucide="shield-check" class="w-8 h-8 opacity-20"></i>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <div class="sticky-console px-6 py-6 w-full">
-        <div class="max-w-md mx-auto space-y-4">
-            
-            <div class="segmented-bg">
-                <button onclick="setGuest('standard')" id="btnStandard" class="segmented-item active">Standard Guest</button>
-                <button onclick="setGuest('diplomat')" id="btnDiplomat" class="segmented-item">Diplomat Exempt</button>
             </div>
 
-            <div class="grid grid-cols-12 gap-2">
-                <div class="col-span-8 input-pill px-4 py-3 flex items-center">
-                    <span class="text-[10px] font-bold text-zinc-400 mr-3 border-r pr-2 border-zinc-200">LKR</span>
-                    <input 
-                        type="number" 
-                        id="baseInput" 
-                        inputmode="decimal"
-                        oninput="updateUI()"
-                        placeholder="Base Value" 
-                        class="w-full bg-transparent outline-none font-bold text-lg placeholder:text-zinc-200"
-                    >
-                </div>
-                <button onclick="toggleDiscType()" id="typeBtn" class="col-span-4 input-pill flex items-center justify-center font-black text-xs btn-press bg-white">
-                    PERCENT %
-                </button>
-            </div>
-
-            <div class="flex gap-2">
-                <div class="flex-1 input-pill px-4 py-3 flex items-center">
-                    <i data-lucide="tag" class="w-3.5 h-3.5 text-zinc-400 mr-2"></i>
-                    <input 
-                        type="number" 
-                        id="customDiscount" 
-                        inputmode="decimal"
-                        oninput="updateUI()"
-                        placeholder="Discount value" 
-                        class="w-full bg-transparent outline-none font-semibold text-sm"
-                    >
-                </div>
-                <button onclick="resetInputs()" class="w-12 h-12 rounded-[14px] bg-zinc-100 flex items-center justify-center btn-press">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-zinc-400"></i>
-                </button>
-            </div>
-
-            <footer class="text-center pt-2">
-                <p class="text-[9px] font-bold text-zinc-300 uppercase tracking-widest leading-none">
-                    Gavin Matthew. Secure local computation.
-                </p>
-            </footer>
+            <button onclick="fullReset()" class="w-full py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-900 transition-colors">
+                Clear all fields
+            </button>
         </div>
     </div>
 
@@ -191,7 +236,7 @@
         lucide.createIcons();
 
         let guestType = 'standard';
-        let discountType = 'pct';
+        let discountType = 'pct'; // pct or fixed
 
         function setGuest(type) {
             guestType = type;
@@ -203,72 +248,78 @@
             const diplomatCard = document.getElementById('diplomatCard');
 
             if(type === 'diplomat') {
-                sscRow.style.opacity = '0.15';
-                vatRow.style.opacity = '0.15';
+                sscRow.classList.add('opacity-10', 'pointer-events-none');
+                vatRow.classList.add('opacity-10', 'pointer-events-none');
                 diplomatCard.classList.remove('hidden');
             } else {
-                sscRow.style.opacity = '1';
-                vatRow.style.opacity = '1';
+                sscRow.classList.remove('opacity-10', 'pointer-events-none');
+                vatRow.classList.remove('opacity-10', 'pointer-events-none');
                 diplomatCard.classList.add('hidden');
             }
-            updateUI();
+            calculate();
         }
 
-        function toggleDiscType() {
-            discountType = (discountType === 'pct') ? 'lkr' : 'pct';
-            document.getElementById('typeBtn').innerText = (discountType === 'pct') ? 'PERCENT %' : 'FIXED LKR';
-            updateUI();
+        function setDiscType(type) {
+            discountType = type;
+            document.getElementById('typePct').classList.toggle('active', type === 'pct');
+            document.getElementById('typeFixed').classList.toggle('active', type === 'fixed');
+            calculate();
         }
 
-        function resetInputs() {
+        function fullReset() {
             document.getElementById('baseInput').value = '';
-            document.getElementById('customDiscount').value = '';
-            updateUI();
+            document.getElementById('discInput').value = '';
+            calculate();
         }
 
         function format(num) {
-            return new Intl.NumberFormat('en-US', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            }).format(num);
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         }
 
-        function updateUI() {
+        function calculate() {
             const base = parseFloat(document.getElementById('baseInput').value) || 0;
-            const discInput = parseFloat(document.getElementById('customDiscount').value) || 0;
+            const discInput = parseFloat(document.getElementById('discInput').value) || 0;
 
-            let discVal = (discountType === 'pct') ? base * (discInput / 100) : discInput;
-            const taxableBase = Math.max(0, base - discVal);
-            
-            // Core Tax Math
-            const sc = taxableBase * 0.10;
-            const tdl = taxableBase * 0.0104;
-            const ssc = (taxableBase + sc) * 0.025641;
-            const vat = (taxableBase + sc + ssc) * 0.18;
+            let discountValue = (discountType === 'pct') ? base * (discInput / 100) : discInput;
+            const taxableSubtotal = Math.max(0, base - discountValue);
 
-            // Display Update
-            document.getElementById('summarySub').innerText = format(taxableBase);
-            document.getElementById('summarySC').innerText = format(sc);
-            document.getElementById('summaryTDL').innerText = format(tdl);
-            document.getElementById('summarySSC').innerText = format(ssc);
-            document.getElementById('summaryVAT').innerText = format(vat);
+            // Cascade Math (as per hospitality standards in reference image)
+            const serviceCharge = taxableSubtotal * 0.10;
+            const tdl = taxableSubtotal * 0.0104; // 1% TDL + compounding effects
+            const ssc = (taxableSubtotal + serviceCharge) * 0.025641; // SSCL rate
+            const vat = (taxableSubtotal + serviceCharge + ssc) * 0.18; // 18% VAT
 
-            let total = 0;
+            // Update Breakdown UI
+            document.getElementById('taxableLabel').innerText = `SUBTOTAL: ${format(taxableSubtotal)}`;
+            document.getElementById('scVal').innerText = format(serviceCharge);
+            document.getElementById('tdlVal').innerText = format(tdl);
+            document.getElementById('sscVal').innerText = format(ssc);
+            document.getElementById('vatVal').innerText = format(vat);
+
+            let grandTotal = 0;
             if (guestType === 'standard') {
-                total = taxableBase + sc + tdl + ssc + vat;
+                grandTotal = taxableSubtotal + serviceCharge + tdl + ssc + vat;
             } else {
-                total = taxableBase + sc + tdl;
-                document.getElementById('exTotal').innerText = format(vat + ssc) + ' LKR';
+                grandTotal = taxableSubtotal + serviceCharge + tdl;
+                // Exemption Logic
+                document.getElementById('totalExVal').innerText = format(vat + ssc) + ' LKR';
             }
 
-            document.getElementById('grandTotal').innerText = format(total);
+            document.getElementById('grandTotal').innerText = format(grandTotal);
         }
 
-        // Handle mobile keyboard resize gracefully
-        window.visualViewport.addEventListener('resize', () => {
-            // This ensures the console stays above the keyboard on Android/Chrome
-            document.body.style.height = window.visualViewport.height + 'px';
-        });
+        // Viewport Handling for Mobile Keyboard
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const app = document.getElementById('app');
+                app.style.height = `${window.visualViewport.height}px`;
+                
+                // Auto-scroll to total when typing to keep result visible
+                if (document.activeElement.tagName === 'INPUT') {
+                    window.scrollTo(0,0);
+                }
+            });
+        }
     </script>
 </body>
 </html>
